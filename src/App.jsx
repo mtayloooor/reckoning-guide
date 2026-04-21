@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { List, CheckCircle2, Circle, Eye, EyeOff, Crosshair } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { List, CheckCircle2, Circle, Eye, EyeOff, Crosshair, Map, Video } from 'lucide-react';
 
 const SETUP_STEPS = [
   "Activate Pack-a-Punch: Open the map and turn on Pack-a-Punch.",
@@ -147,6 +147,16 @@ export default function App() {
   const setupProgressPercentage = Math.round((completedSetup.size / SETUP_STEPS.length) * 100);
   const mainProgressPercentage = Math.round((completedMain.size / totalMainSteps) * 100);
 
+  // Auto-scroll to the current active step whenever progress is made
+  useEffect(() => {
+    if (!showAll) {
+      const activeEl = document.getElementById(`step-${firstUncompletedId}`);
+      if (activeEl) {
+        activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [firstUncompletedId, showAll]);
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans p-4 md:p-8 selection:bg-emerald-500/30">
       <div className="max-w-3xl mx-auto space-y-8">
@@ -161,13 +171,33 @@ export default function App() {
             <p className="text-zinc-400 mt-1">Interactive step-by-step guide</p>
           </div>
           
-          <button
-            onClick={() => setShowAll(!showAll)}
-            className="flex items-center gap-2 px-4 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded-lg text-sm font-medium transition-colors"
-          >
-            {showAll ? <EyeOff size={18} className="text-zinc-400" /> : <Eye size={18} className="text-emerald-400" />}
-            {showAll ? "Interactive Mode" : "Show All Steps"}
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <a
+              href="https://i.redd.it/8yuhwdm4g2if1.png"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded-lg text-sm font-medium transition-colors text-zinc-300 hover:text-white"
+            >
+              <Map size={18} className="text-blue-400" />
+              Open Map
+            </a>
+            <a
+              href="https://www.youtube.com/watch?v=tnbfeAFu7OY"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded-lg text-sm font-medium transition-colors text-zinc-300 hover:text-white"
+            >
+              <Video size={18} className="text-red-400" />
+              Video Walkthrough
+            </a>
+            <button
+              onClick={() => setShowAll(!showAll)}
+              className="flex items-center gap-2 px-4 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded-lg text-sm font-medium transition-colors text-zinc-300 hover:text-white"
+            >
+              {showAll ? <EyeOff size={18} className="text-zinc-400" /> : <Eye size={18} className="text-emerald-400" />}
+              {showAll ? "Interactive Mode" : "Show All Steps"}
+            </button>
+          </div>
         </div>
 
         {/* Overarching Setup Goals */}
@@ -209,7 +239,7 @@ export default function App() {
         </section>
 
         {/* Main Quest Steps */}
-        <div className="space-y-8">
+        <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-white tracking-tight">Main Quest</h2>
             <span className="text-sm font-medium text-zinc-400">
@@ -217,55 +247,70 @@ export default function App() {
             </span>
           </div>
 
-          {flatMainSteps.map((section) => {
-            // Determine which steps in this section should be rendered
-            const visibleSteps = section.steps.filter(step => showAll || step.id <= firstUncompletedId);
-            
-            // If no steps in this section are visible yet, don't render the section
-            if (visibleSteps.length === 0) return null;
+          <div className="space-y-8 pr-2 max-h-[60vh] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-zinc-950/50 [&::-webkit-scrollbar-thumb]:bg-zinc-800 [&::-webkit-scrollbar-thumb]:rounded-full scroll-smooth">
+            {flatMainSteps.map((section) => {
+              // Show completed steps, current step, and next 3 upcoming steps
+              const visibleSteps = section.steps.filter(step => showAll || step.id <= firstUncompletedId + 3);
+              
+              if (visibleSteps.length === 0) return null;
 
-            return (
-              <section key={section.sectionId} className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
-                <div className="flex items-center gap-3">
-                  <div className="h-px bg-zinc-800 flex-1"></div>
-                  <h3 className="text-lg font-semibold text-emerald-400">{section.section}</h3>
-                  <div className="h-px bg-zinc-800 flex-1"></div>
-                </div>
+              return (
+                <section key={section.sectionId} className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
+                  <div className="flex items-center gap-3">
+                    <div className="h-px bg-zinc-800 flex-1"></div>
+                    <h3 className="text-lg font-semibold text-emerald-400">{section.section}</h3>
+                    <div className="h-px bg-zinc-800 flex-1"></div>
+                  </div>
 
-                <div className="grid gap-3 relative before:absolute before:inset-y-0 before:left-[1.3rem] before:w-px before:bg-zinc-800">
-                  {visibleSteps.map((step) => {
-                    const isCompleted = completedMain.has(step.id);
-                    const isActive = !showAll && step.id === firstUncompletedId;
-                    
-                    return (
-                      <div 
-                        key={step.id}
-                        onClick={() => toggleMain(step.id)}
-                        className={`relative z-10 flex items-start gap-4 p-4 rounded-lg cursor-pointer transition-all duration-500 border ${
-                          isCompleted 
-                            ? 'bg-zinc-950/40 border-zinc-800/30 opacity-60' 
-                            : isActive
-                              ? 'bg-zinc-800/80 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.05)] transform scale-[1.01]'
-                              : 'bg-zinc-900/60 border-zinc-800 hover:border-emerald-500/50 hover:bg-zinc-800/80'
-                        }`}
-                      >
-                        <button className="flex-shrink-0 mt-0.5 focus:outline-none bg-zinc-950 rounded-full">
-                          {isCompleted ? (
-                            <CheckCircle2 className="text-emerald-600 transition-transform hover:scale-110" size={24} />
-                          ) : (
-                            <Circle className={`transition-colors ${isActive ? 'text-emerald-400' : 'text-zinc-600'}`} size={24} />
-                          )}
-                        </button>
-                        <p className={`text-base ${isCompleted ? 'line-through decoration-zinc-700' : ''}`}>
-                          {formatText(step.text, isCompleted)}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            );
-          })}
+                  <div className="grid gap-3 relative before:absolute before:inset-y-0 before:left-[1.3rem] before:w-px before:bg-zinc-800">
+                    {visibleSteps.map((step) => {
+                      const isCompleted = completedMain.has(step.id);
+                      const isActive = !showAll && step.id === firstUncompletedId;
+                      const isUpcoming1 = !showAll && step.id === firstUncompletedId + 1;
+                      const isUpcoming2 = !showAll && step.id === firstUncompletedId + 2;
+                      const isUpcoming3 = !showAll && step.id === firstUncompletedId + 3;
+                      
+                      let stepClasses = "relative z-10 flex items-start gap-4 p-4 rounded-lg cursor-pointer transition-all duration-500 border origin-top-left ";
+                      
+                      if (isCompleted) {
+                        stepClasses += "bg-zinc-950/40 border-zinc-800/30 opacity-60 hover:opacity-80 ";
+                      } else if (isActive) {
+                        stepClasses += "bg-zinc-800/80 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.05)] transform scale-[1.01] ";
+                      } else if (isUpcoming1) {
+                        stepClasses += "bg-zinc-900/40 border-zinc-800/50 opacity-70 transform scale-[0.95] pointer-events-none ";
+                      } else if (isUpcoming2) {
+                        stepClasses += "bg-zinc-900/20 border-zinc-800/30 opacity-40 transform scale-[0.90] pointer-events-none ";
+                      } else if (isUpcoming3) {
+                        stepClasses += "bg-zinc-900/10 border-zinc-800/20 opacity-20 transform scale-[0.85] pointer-events-none ";
+                      } else {
+                        stepClasses += "bg-zinc-900/60 border-zinc-800 hover:border-emerald-500/50 hover:bg-zinc-800/80 ";
+                      }
+
+                      return (
+                        <div 
+                          key={step.id}
+                          id={`step-${step.id}`}
+                          onClick={() => toggleMain(step.id)}
+                          className={stepClasses}
+                        >
+                          <button className="flex-shrink-0 mt-0.5 focus:outline-none bg-zinc-950 rounded-full">
+                            {isCompleted ? (
+                              <CheckCircle2 className="text-emerald-600 transition-transform hover:scale-110" size={24} />
+                            ) : (
+                              <Circle className={`transition-colors ${isActive ? 'text-emerald-400' : 'text-zinc-600'}`} size={24} />
+                            )}
+                          </button>
+                          <p className={`text-base ${isCompleted ? 'line-through decoration-zinc-700' : ''}`}>
+                            {formatText(step.text, isCompleted)}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
         </div>
         
         {completedMain.size === totalMainSteps && (
