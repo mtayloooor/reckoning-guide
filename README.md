@@ -1,4 +1,5 @@
 # BO6 interactive Reckoning Guide
+Available here: https://mtayloooor.github.io/reckoning-guide/
 
 - Steps for completing the Easter Egg/reaching the boss fight are hardcoded, taken from the transcript of this video: https://www.youtube.com/watch?v=tnbfeAFu7OY
 - To update the steps or project in anyway, you can make changes to the local src files, then use the commands below:
